@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>图形铸造 · 本地图片转模型</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="图形铸造首页">
+      <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
+      <span>图形铸造</span>
+    </a>
+    <div class="topbar-meta"><span class="privacy-dot"></span><span>所有处理均在本机</span><span class="meta-divider"></span><span id="connection-label">正在检查 Ollama</span><span id="connection-dot" class="connection-dot pending"></span></div>
+  </header>
+
+  <main class="workspace">
+    <aside class="control-panel">
+      <div class="eyebrow"><span class="eyebrow-rule"></span>IMAGE → MESH <span class="version-tag">LOCAL / 01</span></div>
+      <h1>从一张图，<br>补全一个空间。</h1>
+      <p class="intro">依据透视与画面线索，重建可见场景并推测遮挡和画外部分。</p>
+
+      <section class="step-section" aria-labelledby="image-heading">
+        <div class="section-heading"><span class="step-number">01</span><h2 id="image-heading">参考图像</h2><span class="section-note">PNG · JPG · WEBP</span></div>
+        <label class="dropzone" id="dropzone" for="image-input">
+          <input id="image-input" type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden>
+          <span class="upload-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M5 14v5h14v-5"/></svg></span>
+          <span class="drop-title" id="drop-title">拖入一张图片</span>
+          <span class="drop-subtitle" id="drop-subtitle">或点击选择文件 · 最大 10 MB</span>
+          <img id="image-preview" alt="所选参考图像预览" hidden>
+          <button class="clear-image" id="clear-image" type="button" aria-label="移除图片" title="移除图片">×</button>
+        </label>
+      </section>
+
+      <section class="step-section model-section" aria-labelledby="model-heading">
+        <div class="section-heading"><span class="step-number">02</span><h2 id="model-heading">本地视觉模型</h2><button class="icon-button" id="refresh-models" type="button" title="刷新本地模型" aria-label="刷新本地模型"><svg viewBox="0 0 24 24"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M5.6 9a7 7 0 0 1 11.7-2L20 12M4 12l2.7 5a7 7 0 0 0 11.7-2"/></svg></button></div>
+        <div class="select-wrap"><select id="model-select" aria-label="选择 Ollama 模型"><option value="">正在读取已安装模型…</option></select><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg></div>
+        <p class="field-hint" id="model-hint">请选择已安装的视觉模型，例如 llava 或 qwen2.5vl。</p>
+      </section>
+
+      <button class="generate-button" id="generate-button" type="button" disabled><span class="button-label">生成 3D 网格</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13m-5-5 5 5-5 5"/></svg></button>
+      <div class="progress-wrap" id="progress-wrap" hidden><div class="progress-track"><span></span></div><div class="progress-copy"><span id="progress-label">正在读取图像并构建形体…</span><span class="pulse-indicator"></span></div></div>
+      <p class="privacy-note"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="11" rx="1"/><path d="M8 10V7a4 4 0 1 1 8 0v3m-4 5v2"/></svg>图片不会离开这台设备。只连接本机 Ollama。</p>
+      <div class="error-message" id="error-message" role="alert" hidden></div>
+    </aside>
+
+    <section class="preview-panel" aria-label="模型预览">
+      <div class="preview-topline"><span class="preview-title">工作台 <span class="preview-separator">/</span> <span id="preview-state">等待参考图像</span></span><span class="viewport-label"><span class="axis-mark">XYZ</span> PERSPECTIVE</span></div>
+      <div class="viewport" id="viewport">
+        <div class="viewport-grid" aria-hidden="true"></div>
+        <div class="axis-lines" aria-hidden="true"><span class="axis-x"></span><span class="axis-y"></span></div>
+        <div class="empty-state" id="empty-state"><div class="empty-object" aria-hidden="true"><span class="object-face face-a"></span><span class="object-face face-b"></span><span class="object-face face-c"></span></div><p>形体将在这里显现</p><span>导入图像并选择模型以开始</span></div>
+        <canvas id="mesh-canvas" aria-label="可旋转的网格预览" hidden></canvas>
+        <div class="mesh-badge" id="mesh-badge" hidden><span class="badge-dot"></span><span id="mesh-count">0 VERT · 0 FACE</span></div>
+        <div class="image-corner" id="image-corner" hidden><img id="corner-image" alt="参考图像缩略图"><span>REFERENCE</span></div>
+        <div class="canvas-controls" id="canvas-controls" hidden><button id="reset-view" class="icon-button" type="button" title="重置视角" aria-label="重置视角"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 2.6-6.4L3 8m0-5v5h5"/></svg></button><span>拖动旋转</span></div>
+      </div>
+      <div class="result-bar" id="result-bar" hidden><div class="result-copy"><span class="result-kicker">网格已就绪</span><span id="result-description"></span></div><a class="download-button" id="download-button" href="#" download="reference-model.obj"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 17v4h14v-4"/></svg><span>下载 OBJ</span></a></div>
+      <footer class="viewport-footer"><span>OBJ · 可导入 Blender、MeshLab 等工具</span><span>本地推理 <span class="footer-sep">/</span> 单视图近似</span></footer>
+    </section>
+  </main>
+</body>
+</html>
