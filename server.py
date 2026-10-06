@@ -223,10 +223,13 @@ class LocalHandler(BaseHTTPRequestHandler):
         try:
             payload = self.read_json()
             model = payload.get("model")
+            mode = payload.get("mode", "scene")
             image = payload.get("image")
             mime = payload.get("mime", "image/png")
             if not isinstance(model, str) or not re.fullmatch(r"[\w.:/-]{1,120}", model):
                 raise ValueError("请选择一个有效的本地模型。")
+            if mode not in {"object", "scene"}:
+                raise ValueError("请选择单物体或空间补全模式。")
             if mime not in {"image/png", "image/jpeg", "image/webp", "image/gif"}:
                 raise ValueError("图片格式仅支持 PNG、JPG、WebP 或 GIF。")
             if not isinstance(image, str) or len(image) > 15 * 1024 * 1024:
@@ -236,7 +239,7 @@ class LocalHandler(BaseHTTPRequestHandler):
             except ValueError as error:
                 raise ValueError("图片数据无效。") from error
 
-            prompt = (
+            scene_prompt = (
                 "Reconstruct and COMPLETE the full 3D scene suggested by the reference image, not only its central subject. "
                 "Return JSON matching the requested schema only. Use X for image left/right, Z for up, and Y for depth; place the camera at negative Y looking toward positive Y. "
                 "For an interior, build a coherent room with floor, visible walls, plausible ceiling and corners, openings, and the major furniture and objects. "
@@ -248,6 +251,16 @@ class LocalHandler(BaseHTTPRequestHandler):
                 "Coordinates may use any finite scale; the application will center and normalize them. In description, distinguish visible evidence from inferred details "
                 "and briefly note uncertainty inherent in a single image."
             )
+            object_prompt = (
+                "Reconstruct the main subject in the reference image as one complete 3D object. Ignore the background, floor, scenery, text, and shadows. "
+                "Infer the hidden back and any cropped or occluded portions from the visible shape, symmetry, materials, and ordinary object construction. "
+                "Do not leave the object cut off or hollow; make a coherent, closed, centered object with useful geometric detail. "
+                "Return JSON matching the requested schema only. Use X for image left/right, Z for up, and Y for depth; face the subject toward negative Y. "
+                "Build real connected surfaces and volume, not a point cloud. Use zero-based vertex indices, consistent face winding, and 3-6 indices per face. "
+                "Avoid degenerate faces. Coordinates may use any finite scale; the application will center and normalize them. "
+                "In description, briefly distinguish visible details from inferred hidden geometry."
+            )
+            prompt = object_prompt if mode == "object" else scene_prompt
             request_payload = {
                 "model": model,
                 "stream": True,

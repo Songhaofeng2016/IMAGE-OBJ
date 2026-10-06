@@ -4,6 +4,7 @@ const imagePreview = document.querySelector('#image-preview');
 const modelSelect = document.querySelector('#model-select');
 const generateButton = document.querySelector('#generate-button');
 const errorMessage = document.querySelector('#error-message');
+const modeOptions = [...document.querySelectorAll('.mode-option')];
 const canvas = document.querySelector('#mesh-canvas');
 const context = canvas.getContext('2d');
 let selectedImage = null;
@@ -11,6 +12,7 @@ let mesh = null;
 let rotation = { x: -0.38, y: 0.62 };
 let dragOrigin = null;
 let downloadedUrl = null;
+let reconstructionMode = 'scene';
 
 function setError(message = '') {
   errorMessage.textContent = message;
@@ -106,6 +108,17 @@ document.querySelector('#clear-image').addEventListener('click', (event) => {
 });
 modelSelect.addEventListener('change', updateGenerateState);
 document.querySelector('#refresh-models').addEventListener('click', loadModels);
+modeOptions.forEach((option) => {
+  option.addEventListener('click', () => {
+    reconstructionMode = option.dataset.mode;
+    modeOptions.forEach((item) => {
+      item.setAttribute('aria-pressed', String(item === option));
+    });
+    document.querySelector('#mode-hint').textContent = reconstructionMode === 'scene'
+      ? '补齐房间结构、家具，以及被遮挡或画外的部分。'
+      : '聚焦一个主体，补齐被遮挡或裁切的部分，忽略背景。';
+  });
+});
 
 function parseObj(text) {
   const vertices = [];
@@ -176,6 +189,7 @@ window.addEventListener('resize', drawMesh);
 
 function setBusy(busy) {
   generateButton.disabled = busy || !selectedImage || !modelSelect.value;
+  modeOptions.forEach((option) => { option.disabled = busy; });
   generateButton.querySelector('.button-label').textContent = busy ? '正在生成网格…' : '生成 3D 网格';
   document.querySelector('#progress-wrap').hidden = !busy;
 }
@@ -191,7 +205,7 @@ generateButton.addEventListener('click', async () => {
     const response = await fetch('/api/generate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: modelSelect.value, mime: selectedImage.mime, image: selectedImage.dataUrl.split(',')[1] }),
+      body: JSON.stringify({ model: modelSelect.value, mode: reconstructionMode, mime: selectedImage.mime, image: selectedImage.dataUrl.split(',')[1] }),
     });
     if (!response.ok) {
       const error = await response.json();

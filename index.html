@@ -35,8 +35,17 @@
         </label>
       </section>
 
+      <section class="step-section mode-section" aria-labelledby="mode-heading">
+        <div class="section-heading"><span class="step-number">02</span><h2 id="mode-heading">重建模式</h2></div>
+        <div class="mode-switch" role="group" aria-label="选择重建模式">
+          <button class="mode-option" type="button" data-mode="object" aria-pressed="false">单物体</button>
+          <button class="mode-option" type="button" data-mode="scene" aria-pressed="true">空间补全</button>
+        </div>
+        <p class="mode-hint" id="mode-hint">补齐房间结构、家具，以及被遮挡或画外的部分。</p>
+      </section>
+
       <section class="step-section model-section" aria-labelledby="model-heading">
-        <div class="section-heading"><span class="step-number">02</span><h2 id="model-heading">本地视觉模型</h2><button class="icon-button" id="refresh-models" type="button" title="刷新本地模型" aria-label="刷新本地模型"><svg viewBox="0 0 24 24"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M5.6 9a7 7 0 0 1 11.7-2L20 12M4 12l2.7 5a7 7 0 0 0 11.7-2"/></svg></button></div>
+        <div class="section-heading"><span class="step-number">03</span><h2 id="model-heading">本地视觉模型</h2><button class="icon-button" id="refresh-models" type="button" title="刷新本地模型" aria-label="刷新本地模型"><svg viewBox="0 0 24 24"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M5.6 9a7 7 0 0 1 11.7-2L20 12M4 12l2.7 5a7 7 0 0 0 11.7-2"/></svg></button></div>
         <div class="select-wrap"><select id="model-select" aria-label="选择 Ollama 模型"><option value="">正在读取已安装模型…</option></select><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg></div>
         <p class="field-hint" id="model-hint">请选择已安装的视觉模型，例如 llava 或 qwen2.5vl。</p>
       </section>
